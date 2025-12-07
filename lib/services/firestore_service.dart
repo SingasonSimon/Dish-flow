@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
 import '../models/recipe_model.dart';
 import '../models/review_model.dart';
-import '../models/like_model.dart';
 import '../core/constants/app_constants.dart';
 
 class FirestoreService {

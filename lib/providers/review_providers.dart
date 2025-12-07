@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/review_model.dart';
-import '../services/firestore_service.dart';
+import 'recipe_providers.dart';
 
 // Recipe Reviews Provider
 final recipeReviewsProvider =

@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../widgets/glass_card.dart';
 import '../../../widgets/recipe_card.dart';
 import '../../../widgets/rounded_pill_button.dart';
 import '../../../providers/auth_providers.dart';
@@ -211,8 +210,6 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
-
-  Widget _buildStatColumn(BuildContext context, String label, String value) {
 
   Widget _buildStatColumn(BuildContext context, String label, String value) {
     return Column(

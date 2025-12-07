@@ -8,7 +8,6 @@ import '../../../widgets/star_rating.dart';
 import '../../../providers/recipe_providers.dart';
 import '../../../providers/auth_providers.dart';
 import '../../../providers/review_providers.dart';
-import '../../../services/firestore_service.dart';
 import '../../reviews/widgets/review_modal.dart';
 
 class RecipeDetailScreen extends ConsumerStatefulWidget {
@@ -24,8 +23,8 @@ class RecipeDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
-  bool _ingredientsExpanded = true;
-  bool _stepsExpanded = true;
+  final bool _ingredientsExpanded = true;
+  final bool _stepsExpanded = true;
 
   @override
   Widget build(BuildContext context) {

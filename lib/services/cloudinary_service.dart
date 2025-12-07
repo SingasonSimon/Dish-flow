@@ -125,7 +125,7 @@ class CloudinaryService {
   String _generateSignature(String publicId, String timestamp) {
     // In production, this should be done on your backend for security
     // This is a simplified version
-    final String toSign = 'public_id=$publicId&timestamp=$timestamp$apiSecret';
+    // final String toSign = 'public_id=$publicId&timestamp=$timestamp$apiSecret';
     // You would use a proper HMAC-SHA1 implementation here
     return ''; // Placeholder
   }

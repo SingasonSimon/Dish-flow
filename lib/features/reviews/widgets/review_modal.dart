@@ -5,11 +5,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../widgets/star_rating.dart';
 import '../../../widgets/rounded_pill_button.dart';
 import '../../../models/review_model.dart';
-import '../../../services/firestore_service.dart';
 import '../../../providers/auth_providers.dart';
-import '../../../providers/user_providers.dart';
-import '../../../providers/review_providers.dart';
 import '../../../providers/recipe_providers.dart';
+import '../../../providers/review_providers.dart';
 
 class ReviewModal extends ConsumerStatefulWidget {
   final String recipeId;
@@ -46,8 +44,8 @@ class _ReviewModalState extends ConsumerState<ReviewModal> {
 
       setState(() => _isLoading = true);
       try {
-        final userProfile = await ref.read(firestoreServiceProvider).getUserProfile(userId);
         final firestoreService = ref.read(firestoreServiceProvider);
+        final userProfile = await firestoreService.getUserProfile(userId);
 
         final review = ReviewModel(
           id: '', // Will be set by Firestore

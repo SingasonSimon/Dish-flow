@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../core/constants/app_constants.dart';
 
 class StarRating extends StatelessWidget {
   final double rating;

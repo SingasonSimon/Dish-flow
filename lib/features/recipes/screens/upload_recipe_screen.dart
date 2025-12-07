@@ -8,7 +8,6 @@ import '../../../core/theme/app_theme.dart';
 import '../../../widgets/rounded_pill_button.dart';
 import '../../../models/recipe_model.dart';
 import '../../../services/cloudinary_service.dart';
-import '../../../services/firestore_service.dart';
 import '../../../providers/auth_providers.dart';
 import '../../../providers/recipe_providers.dart';
 
