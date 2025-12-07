@@ -50,15 +50,4 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
-  
-  fonts:
-    - family: SFPro
-      fonts:
-        - asset: fonts/SF-Pro-Text-Regular.otf
-        - asset: fonts/SF-Pro-Text-Medium.otf
-          weight: 500
-        - asset: fonts/SF-Pro-Text-Semibold.otf
-          weight: 600
-        - asset: fonts/SF-Pro-Text-Bold.otf
-          weight: 700
 

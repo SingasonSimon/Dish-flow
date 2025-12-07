@@ -43,17 +43,40 @@ class AuthService {
       );
 
       // Update display name
-      await credential.user?.updateDisplayName(displayName);
+      if (credential.user != null && displayName.isNotEmpty) {
+        try {
+          await credential.user!.updateDisplayName(displayName);
+          await credential.user!.reload();
+        } catch (e) {
+          print('Warning: Failed to update display name: $e');
+        }
+      }
 
       // Create user profile in Firestore
       if (credential.user != null) {
-        final userModel = UserModel(
-          uid: credential.user!.uid,
-          email: email,
-          displayName: displayName,
-          createdAt: DateTime.now(),
-        );
-        await _firestoreService.createUserProfile(userModel);
+        try {
+          // Check if profile already exists
+          final existingProfile = await _firestoreService.getUserProfile(credential.user!.uid);
+          if (existingProfile == null) {
+            final userModel = UserModel(
+              uid: credential.user!.uid,
+              email: email,
+              displayName: displayName,
+              createdAt: DateTime.now(),
+            );
+            await _firestoreService.createUserProfile(userModel);
+          } else {
+            // Update display name if it changed
+            if (displayName.isNotEmpty && existingProfile.displayName != displayName) {
+              await _firestoreService.updateUserProfile(credential.user!.uid, {
+                'displayName': displayName,
+              });
+            }
+          }
+        } catch (e) {
+          // Log error but don't fail auth if profile creation fails
+          print('Warning: Failed to create user profile: $e');
+        }
       }
 
       return credential;
@@ -81,22 +104,45 @@ class AuthService {
       final userCredential =
           await _auth.signInWithCredential(credential);
 
-      // Create user profile in Firestore if new user
-      if (userCredential.user != null &&
-          userCredential.additionalUserInfo?.isNewUser == true) {
-        final userModel = UserModel(
-          uid: userCredential.user!.uid,
-          email: userCredential.user!.email ?? '',
-          displayName: userCredential.user!.displayName,
-          photoURL: userCredential.user!.photoURL,
-          createdAt: DateTime.now(),
-        );
-        await _firestoreService.createUserProfile(userModel);
+      // Create or update user profile in Firestore
+      if (userCredential.user != null) {
+        try {
+          final firebaseUser = userCredential.user!;
+          // Check if profile already exists
+          final existingProfile = await _firestoreService.getUserProfile(firebaseUser.uid);
+          if (existingProfile == null || userCredential.additionalUserInfo?.isNewUser == true) {
+            final userModel = UserModel(
+              uid: firebaseUser.uid,
+              email: firebaseUser.email ?? '',
+              displayName: firebaseUser.displayName,
+              photoURL: firebaseUser.photoURL,
+              createdAt: DateTime.now(),
+            );
+            await _firestoreService.createUserProfile(userModel);
+          } else {
+            // Update profile with latest Firebase Auth data
+            final updates = <String, dynamic>{};
+            if (firebaseUser.displayName != null && existingProfile.displayName != firebaseUser.displayName) {
+              updates['displayName'] = firebaseUser.displayName;
+            }
+            if (firebaseUser.photoURL != null && existingProfile.photoURL != firebaseUser.photoURL) {
+              updates['photoURL'] = firebaseUser.photoURL;
+            }
+            if (updates.isNotEmpty) {
+              await _firestoreService.updateUserProfile(firebaseUser.uid, updates);
+            }
+          }
+        } catch (e) {
+          // Log error but don't fail auth if profile creation fails
+          print('Warning: Failed to create/update user profile: $e');
+        }
       }
 
       return userCredential;
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
     } catch (e) {
-      throw Exception('Google sign-in failed: $e');
+      throw Exception('Google sign-in failed: ${e.toString()}');
     }
   }
 
@@ -137,27 +183,37 @@ class AuthService {
   }
 
   // Handle Auth Exceptions
-  String _handleAuthException(FirebaseAuthException e) {
+  Exception _handleAuthException(FirebaseAuthException e) {
+    String message;
     switch (e.code) {
       case 'weak-password':
-        return 'The password provided is too weak.';
+        message = 'The password provided is too weak.';
+        break;
       case 'email-already-in-use':
-        return 'An account already exists for that email.';
+        message = 'An account already exists for that email.';
+        break;
       case 'user-not-found':
-        return 'No user found for that email.';
+        message = 'No user found for that email.';
+        break;
       case 'wrong-password':
-        return 'Wrong password provided.';
+        message = 'Wrong password provided.';
+        break;
       case 'invalid-email':
-        return 'The email address is invalid.';
+        message = 'The email address is invalid.';
+        break;
       case 'user-disabled':
-        return 'This user account has been disabled.';
+        message = 'This user account has been disabled.';
+        break;
       case 'too-many-requests':
-        return 'Too many requests. Please try again later.';
+        message = 'Too many requests. Please try again later.';
+        break;
       case 'operation-not-allowed':
-        return 'This operation is not allowed.';
+        message = 'This operation is not allowed.';
+        break;
       default:
-        return 'An error occurred: ${e.message}';
+        message = e.message ?? 'An error occurred during authentication.';
     }
+    return Exception(message);
   }
 }
 

@@ -8,6 +8,7 @@ import '../../../widgets/rounded_pill_button.dart';
 import '../../../providers/auth_providers.dart';
 import '../../../providers/user_providers.dart';
 import '../../../providers/recipe_providers.dart';
+import '../../../models/user_model.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -23,62 +24,83 @@ class ProfileScreen extends ConsumerWidget {
       backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
         child: userProfileAsync.when(
-          data: (userProfile) => SingleChildScrollView(
-            child: Column(
-              children: [
-                // Profile Header
-                Container(
-                  padding: const EdgeInsets.all(AppConstants.spacingL),
-                  child: Column(
-                    children: [
-                      // Avatar
-                      Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: 50,
-                            backgroundColor: AppTheme.primaryColor,
-                            backgroundImage: userProfile?.photoURL != null
-                                ? NetworkImage(userProfile!.photoURL!)
-                                : null,
-                            child: userProfile?.photoURL == null
-                                ? const Icon(
-                                    Icons.person,
-                                    size: 50,
-                                    color: Colors.white,
-                                  )
-                                : null,
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: AppTheme.primaryColor,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.camera_alt,
-                                size: 16,
-                                color: Colors.white,
+          data: (userProfile) {
+            // Fallback to Firebase Auth user if profile is null
+            final currentUser = ref.watch(currentUserProvider);
+            final displayUser = userProfile ?? (currentUser != null
+                ? UserModel(
+                    uid: currentUser.uid,
+                    email: currentUser.email ?? '',
+                    displayName: currentUser.displayName ?? 'User',
+                    photoURL: currentUser.photoURL,
+                    createdAt: currentUser.metadata.creationTime ?? DateTime.now(),
+                  )
+                : null);
+            
+            if (displayUser == null) {
+              return const Center(
+                child: Text('No user data available'),
+              );
+            }
+            
+            return SingleChildScrollView(
+              child: Column(
+                children: [
+                  // Profile Header
+                  Container(
+                    padding: const EdgeInsets.all(AppConstants.spacingL),
+                    child: Column(
+                      children: [
+                        // Avatar
+                        Stack(
+                          children: [
+                            CircleAvatar(
+                              radius: 50,
+                              backgroundColor: AppTheme.primaryColor,
+                              backgroundImage: displayUser.photoURL != null &&
+                                      displayUser.photoURL!.isNotEmpty
+                                  ? NetworkImage(displayUser.photoURL!)
+                                  : null,
+                              child: displayUser.photoURL == null ||
+                                      displayUser.photoURL!.isEmpty
+                                  ? const Icon(
+                                      Icons.person,
+                                      size: 50,
+                                      color: Colors.white,
+                                    )
+                                  : null,
+                            ),
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: AppTheme.primaryColor,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppConstants.spacingM),
-                      // Username
-                      Text(
-                        userProfile?.displayName ?? 'User',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: AppConstants.spacingXS),
-                      Text(
-                        userProfile?.email ?? '',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppTheme.textSecondary,
-                            ),
-                      ),
+                          ],
+                        ),
+                        const SizedBox(height: AppConstants.spacingM),
+                        // Username
+                        Text(
+                          displayUser.displayName ?? 'User',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: AppConstants.spacingXS),
+                        Text(
+                          displayUser.email,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: AppTheme.textSecondary,
+                              ),
+                        ),
                       const SizedBox(height: AppConstants.spacingL),
                       // Stats
                       Row(
@@ -87,17 +109,17 @@ class ProfileScreen extends ConsumerWidget {
                           _buildStatColumn(
                             context,
                             'Recipes',
-                            '${userProfile?.recipesCount ?? 0}',
+                            '${displayUser.recipesCount}',
                           ),
                           _buildStatColumn(
                             context,
                             'Likes',
-                            '${userProfile?.likesCount ?? 0}',
+                            '${displayUser.likesCount}',
                           ),
                           _buildStatColumn(
                             context,
                             'Saved',
-                            '${userProfile?.savedCount ?? 0}',
+                            '${displayUser.savedCount}',
                           ),
                         ],
                       ),
@@ -201,7 +223,8 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: AppConstants.spacingXL),
               ],
             ),
-          ),
+          );
+          },
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stack) => Center(
             child: Text('Error: $error'),

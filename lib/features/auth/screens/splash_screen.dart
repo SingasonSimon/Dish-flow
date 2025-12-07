@@ -21,12 +21,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _checkAuthAndNavigate() async {
+    // Wait for splash animation
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
 
-    // Listen to auth state changes
-    ref.listen(authStateProvider, (previous, next) {
-      next.whenData((user) {
+    // Wait for auth state to be available
+    final authStateAsync = ref.read(authStateProvider);
+    
+    authStateAsync.when(
+      data: (user) {
         if (mounted) {
           if (user != null) {
             context.go('/home');
@@ -34,20 +37,39 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             context.go('/login');
           }
         }
-      });
-    });
-
-    // Also check current state immediately
-    final authState = ref.read(authStateProvider);
-    authState.whenData((user) {
-      if (mounted) {
-        if (user != null) {
-          context.go('/home');
-        } else {
-          context.go('/login');
-        }
-      }
-    });
+      },
+      loading: () {
+        // If still loading, wait a bit more and check again
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            final state = ref.read(authStateProvider);
+            state.when(
+              data: (user) {
+                if (mounted) {
+                  if (user != null) {
+                    context.go('/home');
+                  } else {
+                    context.go('/login');
+                  }
+                }
+              },
+              loading: () {
+                // If still loading after delay, go to login
+                if (mounted) context.go('/login');
+              },
+              error: (error, stack) {
+                // On error, go to login
+                if (mounted) context.go('/login');
+              },
+            );
+          }
+        });
+      },
+      error: (error, stack) {
+        // On error, navigate to login
+        if (mounted) context.go('/login');
+      },
+    );
   }
 
   @override

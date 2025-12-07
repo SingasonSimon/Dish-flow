@@ -59,26 +59,51 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: cardColor,
+        fillColor: surfaceColor,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusPill),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(AppConstants.radiusL),
+          borderSide: BorderSide(
+            color: textTertiary,
+            width: 1.5,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusPill),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(AppConstants.radiusL),
+          borderSide: BorderSide(
+            color: textTertiary,
+            width: 1.5,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusPill),
-          borderSide: const BorderSide(color: primaryColor, width: 2),
+          borderRadius: BorderRadius.circular(AppConstants.radiusL),
+          borderSide: const BorderSide(
+            color: primaryColor,
+            width: 2,
+          ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusPill),
-          borderSide: const BorderSide(color: errorColor, width: 2),
+          borderRadius: BorderRadius.circular(AppConstants.radiusL),
+          borderSide: const BorderSide(
+            color: errorColor,
+            width: 2,
+          ),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusL),
+          borderSide: const BorderSide(
+            color: errorColor,
+            width: 2,
+          ),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppConstants.spacingL,
           vertical: AppConstants.spacingM,
+        ),
+        labelStyle: _textTheme.bodyMedium?.copyWith(
+          color: textSecondary,
+        ),
+        hintStyle: _textTheme.bodyMedium?.copyWith(
+          color: textTertiary,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(

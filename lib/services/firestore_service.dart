@@ -27,16 +27,29 @@ class FirestoreService {
   }
 
   Stream<UserModel?> getUserProfileStream(String uid) {
-    return _firestore
-        .collection(AppConstants.usersCollection)
-        .doc(uid)
-        .snapshots()
-        .map((doc) {
-      if (doc.exists) {
-        return UserModel.fromMap(doc.data()!, doc.id);
-      }
-      return null;
-    });
+    try {
+      return _firestore
+          .collection(AppConstants.usersCollection)
+          .doc(uid)
+          .snapshots()
+          .map((doc) {
+        if (doc.exists && doc.data() != null) {
+          try {
+            return UserModel.fromMap(doc.data()!, doc.id);
+          } catch (e) {
+            print('Error parsing user profile: $e');
+            return null;
+          }
+        }
+        return null;
+      }).handleError((error) {
+        print('Error fetching user profile: $error');
+        return null;
+      });
+    } catch (e) {
+      print('Error in getUserProfileStream: $e');
+      return Stream.value(null);
+    }
   }
 
   Future<void> updateUserProfile(String uid, Map<String, dynamic> data) async {
@@ -88,15 +101,24 @@ class FirestoreService {
   }
 
   Stream<List<RecipeModel>> getAllRecipes() {
-    return _firestore
-        .collection(AppConstants.recipesCollection)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => RecipeModel.fromMap(doc.data(), doc.id))
-          .toList();
-    });
+    try {
+      return _firestore
+          .collection(AppConstants.recipesCollection)
+          .orderBy('createdAt', descending: true)
+          .limit(50)
+          .snapshots()
+          .map((snapshot) {
+        return snapshot.docs
+            .map((doc) => RecipeModel.fromMap(doc.data(), doc.id))
+            .toList();
+      }).handleError((error) {
+        print('Error fetching recipes: $error');
+        return <RecipeModel>[];
+      });
+    } catch (e) {
+      print('Error in getAllRecipes: $e');
+      return Stream.value(<RecipeModel>[]);
+    }
   }
 
   Stream<List<RecipeModel>> getRecipesByCategory(String category) {
@@ -116,16 +138,38 @@ class FirestoreService {
   }
 
   Stream<List<RecipeModel>> getUserRecipes(String userId) {
-    return _firestore
-        .collection(AppConstants.recipesCollection)
-        .where('authorId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => RecipeModel.fromMap(doc.data(), doc.id))
-          .toList();
-    });
+    try {
+      return _firestore
+          .collection(AppConstants.recipesCollection)
+          .where('authorId', isEqualTo: userId)
+          .orderBy('createdAt', descending: true)
+          .limit(50)
+          .snapshots()
+          .map((snapshot) {
+        return snapshot.docs
+            .map((doc) => RecipeModel.fromMap(doc.data(), doc.id))
+            .toList();
+      }).handleError((error) {
+        print('Error fetching user recipes: $error');
+        // If index error, try without orderBy
+        return _firestore
+            .collection(AppConstants.recipesCollection)
+            .where('authorId', isEqualTo: userId)
+            .limit(50)
+            .snapshots()
+            .map((snapshot) {
+          final recipes = snapshot.docs
+              .map((doc) => RecipeModel.fromMap(doc.data(), doc.id))
+              .toList();
+          // Sort manually
+          recipes.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return recipes;
+        });
+      });
+    } catch (e) {
+      print('Error in getUserRecipes: $e');
+      return Stream.value(<RecipeModel>[]);
+    }
   }
 
   Future<void> updateRecipe(String recipeId, Map<String, dynamic> data) async {

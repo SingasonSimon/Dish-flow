@@ -33,17 +33,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       setState(() => _isLoading = true);
       try {
         final authService = ref.read(authServiceProvider);
-        await authService.signInWithEmailAndPassword(
+        final credential = await authService.signInWithEmailAndPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
-        if (mounted) {
-          context.go('/home');
+        
+        if (credential != null && credential.user != null && mounted) {
+          // Wait for auth state to update by checking current user
+          await Future.delayed(const Duration(milliseconds: 500));
+          // Verify user is still authenticated before navigating
+          final authService = ref.read(authServiceProvider);
+          if (authService.currentUser != null && mounted) {
+            context.go('/home');
+          }
         }
       } catch (e) {
         if (mounted) {
+          String errorMessage = 'An error occurred. Please try again.';
+          if (e is Exception) {
+            errorMessage = e.toString().replaceFirst('Exception: ', '');
+          } else {
+            errorMessage = e.toString();
+          }
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.toString())),
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: AppTheme.errorColor,
+              behavior: SnackBarBehavior.floating,
+            ),
           );
         }
       } finally {
@@ -59,13 +76,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       final authService = ref.read(authServiceProvider);
       final result = await authService.signInWithGoogle();
-      if (result != null && mounted) {
-        context.go('/home');
+      
+      if (result != null && result.user != null && mounted) {
+        // Wait for auth state to update by checking current user
+        await Future.delayed(const Duration(milliseconds: 500));
+        // Verify user is still authenticated before navigating
+        final authService = ref.read(authServiceProvider);
+        if (authService.currentUser != null && mounted) {
+          context.go('/home');
+        }
+      } else if (result == null && mounted) {
+        // User cancelled - don't show error
+        setState(() => _isLoading = false);
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'An error occurred. Please try again.';
+        if (e is Exception) {
+          errorMessage = e.toString().replaceFirst('Exception: ', '');
+        } else {
+          errorMessage = e.toString();
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: AppTheme.errorColor,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     } finally {
@@ -216,7 +253,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 OutlinedButton.icon(
                   onPressed: _isLoading ? null : _handleGoogleSignIn,
                   icon: Image.asset(
-                    'assets/icons/google.png',
+                    'assets/icons/google_logo.png',
                     width: 24,
                     height: 24,
                     errorBuilder: (context, error, stackTrace) =>
@@ -227,9 +264,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     padding: const EdgeInsets.symmetric(
                       vertical: AppConstants.spacingM,
                     ),
+                    side: BorderSide(
+                      color: AppTheme.textTertiary,
+                      width: 1.5,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(
-                        AppConstants.radiusPill,
+                        AppConstants.radiusL,
                       ),
                     ),
                   ),
