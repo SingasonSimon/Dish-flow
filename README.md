@@ -64,11 +64,24 @@ cd Dish-Flow
 flutter pub get
 ```
 
-3. Configure Firebase:
-   - Android: `google-services.json` is already in `android/app/`
-   - iOS: `GoogleService-Info.plist` is already in `ios/Runner/`
+3. **Generate Firebase Options** (Required):
+   ```bash
+   # Install FlutterFire CLI
+   dart pub global activate flutterfire_cli
+   
+   # Configure Firebase
+   flutterfire configure
+   ```
+   This creates `lib/core/utils/firebase_options.dart` with your Firebase credentials.
+   
+   **⚠️ Security Note**: `firebase_options.dart` is in `.gitignore` - each developer must generate their own. See [SECURITY.md](SECURITY.md) for details.
 
-4. Configure Cloudinary:
+4. Configure Firebase config files:
+   - Android: `google-services.json` should be in `android/app/`
+   - iOS: `GoogleService-Info.plist` should be in `ios/Runner/`
+   - These are typically committed (contain public client keys)
+
+5. Configure Cloudinary:
    - Update `lib/services/cloudinary_service.dart` with your Cloudinary credentials:
      - `cloudName`
      - `apiKey`
