@@ -46,19 +46,32 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         );
         
         if (credential != null && credential.user != null && mounted) {
-          // Wait for auth state to update by checking current user
-          await Future.delayed(const Duration(milliseconds: 500));
-          // Verify user is still authenticated before navigating
-          final authService = ref.read(authServiceProvider);
-          if (authService.currentUser != null && mounted) {
-            context.go('/home');
+          // Wait for auth state stream to update
+          await Future.delayed(const Duration(milliseconds: 800));
+          
+          // Double check user is authenticated
+          final currentUser = authService.currentUser;
+          if (currentUser != null && mounted) {
+            // Navigate to home
+            if (mounted) {
+              context.go('/home');
+            }
+          } else {
+            throw Exception('Registration failed. Please try again.');
           }
+        } else {
+          throw Exception('Failed to create account. Please try again.');
         }
       } catch (e) {
+        print('Registration error: $e');
         if (mounted) {
           String errorMessage = 'An error occurred. Please try again.';
           if (e is Exception) {
-            errorMessage = e.toString().replaceFirst('Exception: ', '');
+            final errorStr = e.toString();
+            errorMessage = errorStr.replaceFirst('Exception: ', '');
+            if (errorMessage.isEmpty) {
+              errorMessage = 'Failed to create account. Please try again.';
+            }
           } else {
             errorMessage = e.toString();
           }
@@ -67,6 +80,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               content: Text(errorMessage),
               backgroundColor: AppTheme.errorColor,
               behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 4),
             ),
           );
         }
@@ -93,22 +107,37 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       final result = await authService.signInWithGoogle();
       
       if (result != null && result.user != null && mounted) {
-        // Wait for auth state to update by checking current user
-        await Future.delayed(const Duration(milliseconds: 500));
-        // Verify user is still authenticated before navigating
-        final authService = ref.read(authServiceProvider);
-        if (authService.currentUser != null && mounted) {
-          context.go('/home');
+        // Wait for auth state stream to update
+        await Future.delayed(const Duration(milliseconds: 800));
+        
+        // Double check user is authenticated
+        final currentUser = authService.currentUser;
+        if (currentUser != null && mounted) {
+          // Navigate to home
+          if (mounted) {
+            context.go('/home');
+          }
+        } else {
+          throw Exception('Google sign-in failed. Please try again.');
         }
       } else if (result == null && mounted) {
-        // User cancelled - don't show error
-        setState(() => _isLoading = false);
+        // User cancelled - don't show error, just stop loading
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      } else {
+        throw Exception('Google sign-in failed. Please try again.');
       }
     } catch (e) {
+      print('Google Sign-In error: $e');
       if (mounted) {
         String errorMessage = 'An error occurred. Please try again.';
         if (e is Exception) {
-          errorMessage = e.toString().replaceFirst('Exception: ', '');
+          final errorStr = e.toString();
+          errorMessage = errorStr.replaceFirst('Exception: ', '');
+          if (errorMessage.isEmpty) {
+            errorMessage = 'Failed to sign in with Google. Please try again.';
+          }
         } else {
           errorMessage = e.toString();
         }
@@ -117,6 +146,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             content: Text(errorMessage),
             backgroundColor: AppTheme.errorColor,
             behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
           ),
         );
       }

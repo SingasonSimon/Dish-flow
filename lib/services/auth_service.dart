@@ -52,11 +52,10 @@ class AuthService {
         }
       }
 
-      // Create user profile in Firestore
+      // Create user profile in Firestore (non-blocking)
       if (credential.user != null) {
-        try {
-          // Check if profile already exists
-          final existingProfile = await _firestoreService.getUserProfile(credential.user!.uid);
+        // Don't await - let it run in background
+        _firestoreService.getUserProfile(credential.user!.uid).then((existingProfile) {
           if (existingProfile == null) {
             final userModel = UserModel(
               uid: credential.user!.uid,
@@ -64,19 +63,19 @@ class AuthService {
               displayName: displayName,
               createdAt: DateTime.now(),
             );
-            await _firestoreService.createUserProfile(userModel);
-          } else {
-            // Update display name if it changed
-            if (displayName.isNotEmpty && existingProfile.displayName != displayName) {
-              await _firestoreService.updateUserProfile(credential.user!.uid, {
-                'displayName': displayName,
-              });
-            }
+            _firestoreService.createUserProfile(userModel).catchError((e) {
+              print('Warning: Failed to create user profile: $e');
+            });
+          } else if (displayName.isNotEmpty && existingProfile.displayName != displayName) {
+            _firestoreService.updateUserProfile(credential.user!.uid, {
+              'displayName': displayName,
+            }).catchError((e) {
+              print('Warning: Failed to update user profile: $e');
+            });
           }
-        } catch (e) {
-          // Log error but don't fail auth if profile creation fails
-          print('Warning: Failed to create user profile: $e');
-        }
+        }).catchError((e) {
+          print('Warning: Failed to check user profile: $e');
+        });
       }
 
       return credential;
@@ -104,12 +103,11 @@ class AuthService {
       final userCredential =
           await _auth.signInWithCredential(credential);
 
-      // Create or update user profile in Firestore
+      // Create or update user profile in Firestore (non-blocking)
       if (userCredential.user != null) {
-        try {
-          final firebaseUser = userCredential.user!;
-          // Check if profile already exists
-          final existingProfile = await _firestoreService.getUserProfile(firebaseUser.uid);
+        final firebaseUser = userCredential.user!;
+        // Don't await - let it run in background
+        _firestoreService.getUserProfile(firebaseUser.uid).then((existingProfile) {
           if (existingProfile == null || userCredential.additionalUserInfo?.isNewUser == true) {
             final userModel = UserModel(
               uid: firebaseUser.uid,
@@ -118,7 +116,9 @@ class AuthService {
               photoURL: firebaseUser.photoURL,
               createdAt: DateTime.now(),
             );
-            await _firestoreService.createUserProfile(userModel);
+            _firestoreService.createUserProfile(userModel).catchError((e) {
+              print('Warning: Failed to create user profile: $e');
+            });
           } else {
             // Update profile with latest Firebase Auth data
             final updates = <String, dynamic>{};
@@ -129,13 +129,14 @@ class AuthService {
               updates['photoURL'] = firebaseUser.photoURL;
             }
             if (updates.isNotEmpty) {
-              await _firestoreService.updateUserProfile(firebaseUser.uid, updates);
+              _firestoreService.updateUserProfile(firebaseUser.uid, updates).catchError((e) {
+                print('Warning: Failed to update user profile: $e');
+              });
             }
           }
-        } catch (e) {
-          // Log error but don't fail auth if profile creation fails
-          print('Warning: Failed to create/update user profile: $e');
-        }
+        }).catchError((e) {
+          print('Warning: Failed to check user profile: $e');
+        });
       }
 
       return userCredential;
@@ -216,4 +217,5 @@ class AuthService {
     return Exception(message);
   }
 }
+
 
