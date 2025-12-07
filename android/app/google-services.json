@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "522536651284",
+    "project_id": "dish-flow-fb7b4",
+    "storage_bucket": "dish-flow-fb7b4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:522536651284:android:70c783c35642028ee8f501",
+        "android_client_info": {
+          "package_name": "com.dishflow.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "522536651284-nemna0us4cm202pkgl7ml5e7jrl3hvib.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBYBYKfLMecTh22k6Zm2K28uB9lKb75L2E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "522536651284-nemna0us4cm202pkgl7ml5e7jrl3hvib.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
